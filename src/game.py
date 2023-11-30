@@ -7,21 +7,34 @@ from config import Config
 from square import Square
 from dragger import Dragger
 
-class Game:
 
+class Game:
     def __init__(self):
         self.board = Board()
         self.ai = AI()
         self.config = Config()
         self.dragger = Dragger()
-        self.next_player = 'white'
-        self.gamemode = 'ai'
+        self.next_player = "white"
+        self.gamemode = "ai"
         self.selected_piece = None
         self.hovered_square = None
 
     # ------------
     # DRAW METHODS
     # ------------
+
+    # draw a text called CPCS-331 in the middle of the screen
+    def show_title(self, surface):
+        # text
+        text = self.config.font.render("CPCS-331", 1, (255, 255, 255))
+        # text rect
+        text_rect = text.get_rect(center=(WIDTH // 3, HEIGHT // 2.5))
+
+        # increment the size of the text
+        text = pygame.transform.scale(text, (400, 200))
+
+        # draw
+        surface.blit(text, text_rect)
 
     def show_bg(self, surface):
         theme = self.config.theme
@@ -41,9 +54,9 @@ class Game:
                     # color
                     color = theme.bg.dark if row % 2 == 0 else theme.bg.light
                     # coordinates
-                    lbl = self.config.font.render(str(ROWS-row), 1, color)
+                    lbl = self.config.font.render(str(ROWS - row), 1, color)
                     surface.blit(lbl, (5, 5 + row * SQSIZE))
-                
+
                 # col coordinates
                 if row == 7:
                     # coordinates
@@ -52,7 +65,7 @@ class Game:
                     # coordinates
                     lbl = self.config.font.render(Square.get_alphacol(col), 1, color)
                     surface.blit(lbl, (col * SQSIZE + SQSIZE - 20, HEIGHT - 20))
-        
+
         if self.board.last_move:
             self.show_last_move(surface)
 
@@ -64,25 +77,41 @@ class Game:
             for col in range(COLS):
                 # piece ?
                 if self.board.squares[row][col].has_piece():
-                    piece = self.board.squares[row][col].piece
+                    piece = self.board.squares[row][col].piece  # get the piece object
                     # for dragger
-                    if piece is not self.selected_piece:
-                        piece.set_texture()
-                        texture = piece.texture
-                        img = pygame.image.load(texture)
-                        img_center = col * SQSIZE + SQSIZE // 2, row * SQSIZE + SQSIZE // 2
-                        piece.texture_rect = img.get_rect(center=img_center)
-                        surface.blit(img, piece.texture_rect)
-    
+                    if piece is not self.selected_piece:  # if the piece is not selected
+                        piece.set_texture()  # set the texture
+                        texture = piece.texture  # get the texture
+                        img = pygame.image.load(texture)  # load the texture
+                        img_center = (  # get the center of the texture
+                            col * SQSIZE + SQSIZE // 2,
+                            row * SQSIZE + SQSIZE // 2,
+                        )
+                        piece.texture_rect = img.get_rect(
+                            center=img_center
+                        )  # get the rect of the texture
+                        surface.blit(
+                            img, piece.texture_rect
+                        )  # blit the texture to the screen
+
     def show_moves(self, surface):
         if self.selected_piece:
             theme = self.config.theme
 
             for move in self.selected_piece.moves:
                 # color
-                color = theme.moves.light if (move.final.row + move.final.col) % 2 == 0 else theme.moves.dark
+                color = (
+                    theme.moves.light
+                    if (move.final.row + move.final.col) % 2 == 0
+                    else theme.moves.dark
+                )
                 # rect
-                rect = (move.final.col * SQSIZE, move.final.row * SQSIZE, SQSIZE, SQSIZE)
+                rect = (
+                    move.final.col * SQSIZE,
+                    move.final.row * SQSIZE,
+                    SQSIZE,
+                    SQSIZE,
+                )
                 # draw
                 pygame.draw.rect(surface, color, rect)
 
@@ -96,7 +125,11 @@ class Game:
             # color
             for pos in [initial, final]:
                 # color
-                color = theme.trace.light if (pos.col + pos.row) % 2 == 0 else theme.trace.dark
+                color = (
+                    theme.trace.light
+                    if (pos.col + pos.row) % 2 == 0
+                    else theme.trace.dark
+                )
                 # rect
                 rect = (pos.col * SQSIZE, pos.row * SQSIZE, SQSIZE, SQSIZE)
                 # draw
@@ -107,7 +140,12 @@ class Game:
             # color
             color = (180, 180, 180)
             # rect
-            rect = (self.hovered_square.col * SQSIZE, self.hovered_square.row * SQSIZE, SQSIZE, SQSIZE)
+            rect = (
+                self.hovered_square.col * SQSIZE,
+                self.hovered_square.row * SQSIZE,
+                SQSIZE,
+                SQSIZE,
+            )
             # draw
             pygame.draw.rect(surface, color, rect, 3)
 
@@ -119,21 +157,23 @@ class Game:
         self.config.change_theme()
 
     def sound_effect(self, captured):
-        if captured: self.config.capture_sound.play()
-        else: self.config.move_sound.play()
+        if captured:
+            self.config.capture_sound.play()
+        else:
+            self.config.move_sound.play()
 
     def next_turn(self):
-        self.next_player = 'black' if self.next_player == 'white' else 'white'
+        self.next_player = "black" if self.next_player == "white" else "white"
 
     def change_gamemode(self):
-        self.gamemode = 'ai' if self.gamemode == 'pvp' else 'pvp'
+        self.gamemode = "ai" if self.gamemode == "pvp" else "pvp"
 
     def set_hover(self, row, col):
         self.hovered_square = self.board.squares[row][col]
 
     def select_piece(self, piece):
         self.selected_piece = piece
-    
+
     def unselect_piece(self):
         self.selected_piece = None
 
