@@ -1,12 +1,12 @@
 from const import *
-from square import Square
-from piece import *
-from move import Move
-from sound import Sound
+import pygame
 import copy
 import os
 
 
+###########################################################################
+###########################################################################
+# Board class
 class Board:
     def __init__(self):
         self.squares = [[0, 0, 0, 0, 0, 0, 0, 0] for col in range(COLS)]
@@ -335,9 +335,20 @@ class Board:
                                 # append new move
                                 piece.add_move(move)
                             else:
-                                break
+                                # need to check for all possible moves for the king, if there is no valid move, then it's checkmate
+                                # first check if there is a valid move
+                                if len(piece.moves) == 0:
+                                    # if not, then it's checkmate
+                                    # checkmate
+                                    print("checkmate")
+                                    exit(0)
+
+                                else:
+                                    piece.add_move(move)
+                                    break
+
                         else:
-                            # append new move
+                            # append new move3
                             piece.add_move(move)
 
             # castling moves
@@ -490,3 +501,147 @@ class Board:
 
         # king
         self.squares[row_other][4] = Square(row_other, 4, King(color))
+
+
+###########################################################################
+###########################################################################
+# Square class
+class Square:
+    ALPHACOLS = {0: "a", 1: "b", 2: "c", 3: "d", 4: "e", 5: "f", 6: "g", 7: "h"}
+
+    def __init__(self, row, col, piece=None):
+        self.row = row
+        self.col = col
+        self.piece = piece
+        self.alphacol = self.ALPHACOLS[col]
+
+    def __eq__(self, other):
+        return self.row == other.row and self.col == other.col
+
+    def has_piece(self):
+        return self.piece != None
+
+    def isempty(self):
+        return not self.has_piece()
+
+    def has_team_piece(self, color):
+        return self.has_piece() and self.piece.color == color
+
+    def has_enemy_piece(self, color):
+        return self.has_piece() and self.piece.color != color
+
+    def isempty_or_enemy(self, color):
+        return self.isempty() or self.has_enemy_piece(color)
+
+    @staticmethod
+    def in_range(*args):
+        for arg in args:
+            if arg < 0 or arg > 7:
+                return False
+
+        return True
+
+    @staticmethod
+    def get_alphacol(col):
+        ALPHACOLS = {0: "a", 1: "b", 2: "c", 3: "d", 4: "e", 5: "f", 6: "g", 7: "h"}
+        return ALPHACOLS[col]
+
+
+###########################################################################
+###########################################################################
+# Piece classes
+class Piece:
+    def __init__(self, name, color, value, texture=None, texture_rect=None):
+        self.name = name
+        self.color = color
+        value_sign = 1 if color == "white" else -1
+        self.value = value * value_sign
+        self.moves = []
+        self.moved = False
+        self.texture = texture
+        self.set_texture()
+        self.texture_rect = texture_rect
+
+    def set_texture(self, size=80):
+        self.texture = os.path.join(
+            f"assets/images/imgs-{size}px/{self.color}_{self.name}.png"
+        )
+
+    def add_move(self, move):
+        self.moves.append(move)
+
+    def clear_moves(self):
+        self.moves = []
+
+
+class Pawn(Piece):
+    def __init__(self, color):
+        self.dir = -1 if color == "white" else 1
+        self.en_passant = False
+        super().__init__("pawn", color, 1.0)
+
+
+class Knight(Piece):
+    def __init__(self, color):
+        super().__init__("knight", color, 3.0)
+
+
+class Bishop(Piece):
+    def __init__(self, color):
+        super().__init__("bishop", color, 3.001)
+
+
+class Rook(Piece):
+    def __init__(self, color):
+        super().__init__("rook", color, 5.0)
+
+
+class Queen(Piece):
+    def __init__(self, color):
+        super().__init__("queen", color, 9.0)
+
+
+class King(Piece):
+    def __init__(self, color):
+        self.left_rook = None
+        self.right_rook = None
+        super().__init__("king", color, 10000.0)
+
+
+###########################################################################
+###########################################################################
+# Move class
+class Move:
+    """
+    Stores a game move data
+    """
+
+    def __init__(self, initial, final):
+        self.initial = initial  # Square
+        self.final = final  # Square
+
+    def __str__(self):
+        return str(self.initial) + ", " + str(self.final)
+
+    def __eq__(self, other):
+        return self.initial == other.initial and self.final == other.final
+
+
+###########################################################################
+###########################################################################
+# Sound class
+class Sound:
+    """
+    Stores the game sounds
+    """
+
+    def __init__(self, path):
+        self.path = path
+        self.sound = pygame.mixer.Sound(path)
+
+    # -------------
+    # CLASS METHODS
+    # -------------
+
+    def play(self):
+        pygame.mixer.Sound.play(self.sound)
