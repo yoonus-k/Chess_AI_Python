@@ -174,6 +174,7 @@ class AI:
 
         # white
         if maximizing:
+            best_move = None
             max_eval = -math.inf
             moves = self.get_moves(board, "white")
             for move in moves:
@@ -193,13 +194,14 @@ class AI:
                 if beta <= alpha:
                     break
 
-            if not best_move:
+            if best_move is not None and not best_move:
                 best_move = moves[0]
 
             return max_eval, best_move  # eval, move
 
         # black
         elif not maximizing:
+            best_move = None
             min_eval = math.inf
             moves = self.get_moves(board, "black")
             for move in moves:
@@ -220,7 +222,7 @@ class AI:
                 if beta <= alpha:
                     break
 
-            if not best_move:
+            if best_move is not None and not best_move:
                 idx = random.randrange(0, len(moves))
                 best_move = moves[idx]
 
@@ -312,16 +314,17 @@ class AI:
             print("the best move is:", move.__str__)
             print("- Boards explored", self.explored)
             print("- Boards explored without", self.explored_without)
-            print(
-                "optimization:",
-                ((self.explored_without - self.explored) / self.explored) * 100,
-                "%",
-            )
-            print(
-                "Alpha Beta Pruning is almost ",
-                self.explored_without / self.explored,
-                " times faster !",
-            )
+            if self.explored != 0:
+                print(
+                    "optimization:",
+                    ((self.explored_without - self.explored) / self.explored) * 100,
+                    "%",
+                )
+                print(
+                    "Alpha Beta Pruning is almost ",
+                    self.explored_without / self.explored,
+                    " times faster !",
+                )
             if eval >= 5000:
                 print("* White MATE!")
             if eval <= -5000:

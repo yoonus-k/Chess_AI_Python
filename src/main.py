@@ -151,10 +151,6 @@ class Main:
                     if event.key == pygame.K_a:
                         game.change_gamemode()
 
-                    # depth
-                    if event.key == pygame.K_1:
-                        ai.depth = 1
-
                     if event.key == pygame.K_2:
                         ai.depth = 2
 

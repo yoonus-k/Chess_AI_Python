@@ -78,9 +78,11 @@ class Board:
         piece.en_passant = True
 
     def in_check(self, piece, move):
-        temp_piece = copy.deepcopy(piece)
-        temp_board = copy.deepcopy(self)
-        temp_board.move(temp_piece, move, testing=True)
+        temp_piece = copy.deepcopy(piece)  # copy of the piece
+        temp_board = copy.deepcopy(self)  # copy of the board
+        temp_board.move(
+            temp_piece, move, testing=True
+        )  # move the piece on the board copy
 
         for row in range(ROWS):
             for col in range(COLS):
@@ -335,21 +337,18 @@ class Board:
                                 # append new move
                                 piece.add_move(move)
                             else:
-                                # need to check for all possible moves for the king, if there is no valid move, then it's checkmate
-                                # first check if there is a valid move
-                                if len(piece.moves) == 0:
-                                    # if not, then it's checkmate
-                                    # checkmate
-                                    print("checkmate")
-                                    exit(0)
-
-                                else:
-                                    piece.add_move(move)
-                                    break
-
+                                print("check")
+                                checked = True
+                                continue
                         else:
                             # append new move3
                             piece.add_move(move)
+            if len(piece.moves) == 0 and self.in_check(
+                piece, Move(Square(row, col), Square(row, col))
+            ):
+                print("checkmate")
+                pygame.quit()
+                exit(0)
 
             # castling moves
             if not piece.moved:
