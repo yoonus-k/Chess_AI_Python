@@ -24,12 +24,12 @@ class Game:
     # draw a text called CPCS-331 in the middle of the screen
     def show_title(self, surface):
         # text
-        text = self.config.font.render("CPCS-331", 1, (255, 255, 255))
+        text = self.config.font.render("CPCS-331", 1, "#00FF00")
         # text rect
-        text_rect = text.get_rect(center=(WIDTH // 3, HEIGHT // 2.5))
+        text_rect = text.get_rect(center=(WIDTH / 5.5, HEIGHT // 2.5))
 
         # increment the size of the text
-        text = pygame.transform.scale(text, (400, 200))
+        text = pygame.transform.scale(text, (600, 200))
 
         # draw
         surface.blit(text, text_rect)

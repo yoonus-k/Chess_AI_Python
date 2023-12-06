@@ -9,7 +9,7 @@ class Main:
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
-        pygame.display.set_caption("Chess")
+        pygame.display.set_caption("Chess_AI CPCS-331 Project")
         self.game = Game()
 
     def mainloop(self):
@@ -97,6 +97,8 @@ class Main:
                             game.show_pieces(screen)
                             # next -> AI
                             game.next_turn()
+
+                            # if the turn is black , check if the game is over
 
                             # --------------
                             # >>>>> AI >>>>>

@@ -337,7 +337,6 @@ class Board:
                                 # append new move
                                 piece.add_move(move)
                             else:
-                                print("check")
                                 checked = True
                                 continue
                         else:
@@ -347,6 +346,9 @@ class Board:
                 piece, Move(Square(row, col), Square(row, col))
             ):
                 print("checkmate")
+                # exit after 3 seconds
+                pygame.time.delay(3000)
+
                 pygame.quit()
                 exit(0)
 
