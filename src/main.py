@@ -3,6 +3,7 @@ import sys, pygame, os
 from const import *
 from game import *
 from board import *
+import threading
 
 
 class Main:

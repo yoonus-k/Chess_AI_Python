@@ -379,21 +379,19 @@ class AI:
             print(
                 "the best move is:",
                 "(",
-                move_without_pruning.initial.row,
-                ",",
-                move_without_pruning.initial.col,
+                Square.get_alphacol(move_without_pruning.initial.col),
+                8 - move_without_pruning.initial.row,
                 ")",
                 "->",
                 "(",
-                move_without_pruning.final.row,
-                ",",
-                move_without_pruning.final.col,
+                Square.get_alphacol(move_without_pruning.final.col),
+                8 - move_without_pruning.final.row,
                 ").",
             )
             print("- Boards explored", self.explored_without_pruning)
             minimax_without_pruning_time = time_2 - time_1
             print("time taken:", minimax_without_pruning_time, "seconds")
-            print("\n############################################# ")
+            print("\n#####################")
 
             # minimax initial call with pruning
             print("Minimax with pruning Alpha Beta ...")
@@ -406,23 +404,21 @@ class AI:
             print(
                 "the best move is:",
                 "(",
-                move.initial.row,
-                ",",
-                move.initial.col,
+                Square.get_alphacol(move.initial.col),
+                8 - move.initial.row,
                 ")",
                 "->",
                 "(",
-                move.final.row,
-                ",",
-                move.final.col,
+                Square.get_alphacol(move.final.col),
+                8 - move.final.row,
                 ").",
             )
-            print("- Boards explored", self.explored)
-            print("- Pruned nodes", self.explored_without_pruning - self.explored)
+            print("- Boards explored: ", self.explored)
+            print("- Pruned nodes: ", self.explored_without_pruning - self.explored)
             minimax_with_pruning_time = time_2 - time_1
             print("time taken:", minimax_with_pruning_time, "seconds")
 
-            print("\n############################################# ")
+            print("\n#####################")
 
             if self.explored != 0:
                 print(
@@ -439,7 +435,9 @@ class AI:
                 print(
                     "time saved:",
                     minimax_without_pruning_time - minimax_with_pruning_time,
+                    " seconds",
                 )
+                print("\n############################################# ")
             if eval >= 5000:
                 print("* White MATE!")
             if eval <= -5000:
