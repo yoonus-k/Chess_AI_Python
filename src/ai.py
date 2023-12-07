@@ -1,31 +1,35 @@
+# This file is for the AI class and the Book class to calculate the best move for the AI player. (Black)
+# import copy, math, random
 import copy, math, random
 
 from const import *
 from board import *
+import time
 
 
+###########################################################################
+###########################################################################
+# AI class
 class AI:
     def __init__(self, engine="book", depth=2):
+        # var
         self.engine = engine
         self.depth = depth
         self.book = Book()
         self.color = "black"
         self.game_moves = []
         self.explored = 0
-        self.explored_without = 0
+        self.explored_without_pruning = 0
+        self.pruned_nodes = 0
 
-    # ----
-    # BOOK
-    # ----
+    # book moves to accelerate the game performance
 
     def book_move(self):
         move = self.book.next_move(self.game_moves, weighted=True)
         return move
 
-    # -------
-    # MINIMAX
-    # -------
-
+    # heuristic evaluation function , heatmap to evaluate the position of the piece
+    # this heatmap is from the stockfish engine , it is a 8x8 matrix
     def heatmap(self, piece, row, col):
         hmp = 0
         if piece.name == "pawn":
@@ -116,37 +120,43 @@ class AI:
         eval = -hmp[row][col] if piece.color == "black" else hmp[row][col]
         return eval
 
+    # heuristic evaluation function , threats to evaluate the value of the piece if it is attacking the opponent's piece
     def threats(self, board, piece):
         eval = 0
         for move in piece.moves:
             attacked = board.squares[move.final.row][move.final.col]
-            if attacked.has_piece():
+            if attacked.has_piece():  # if the square is not empty
                 if attacked.piece.color != piece.color:
                     # checks
                     if attacked.piece.name == "king":
-                        eval += attacked.piece.value / 10500
+                        eval += (
+                            attacked.piece.value / 10500
+                        )  # decrease the value of the king to make the AI more aggressive
 
                     # threat
                     else:
-                        eval += attacked.piece.value / 45
+                        eval += (
+                            attacked.piece.value / 45
+                        )  # increase the value of the piece to make the AI more aggressive
 
         return eval
 
-    # heuristic evaluation function
+    # heuristic evaluation function, this function is used in the minimax algorithm at the leaf nodes
     def static_eval(self, board):
         # var
         eval = 0
 
+        # loop through the board
         for row in range(ROWS):
             for col in range(COLS):
-                if board.squares[row][col].has_piece():
-                    # piece
+                if board.squares[row][col].has_piece():  # if the square is not empty
+                    # get the piece
                     piece = board.squares[row][col].piece
-                    # white - black
+                    # value of the piece
                     eval += piece.value
-                    # heatmap
+                    # add the heatmap value
                     eval += self.heatmap(piece, row, col)
-                    # moves
+                    # if the piece is not a queen , add the number of moves
                     if piece.name != "queen":
                         eval += 0.01 * len(piece.moves)
                     else:
@@ -157,139 +167,191 @@ class AI:
         eval = round(eval, 5)
         return eval
 
+    # get all the moves of the AI player
     def get_moves(self, board, color):
         moves = []
+        # loop through the board
         for row in range(ROWS):
             for col in range(COLS):
                 square = board.squares[row][col]
                 if square.has_team_piece(color):
-                    board.calc_moves(square.piece, square.row, square.col)
-                    moves += square.piece.moves
+                    board.calc_moves(
+                        square.piece, square.row, square.col
+                    )  # calculate the moves of the piece
+                    moves += square.piece.moves  # add the moves to the list
 
-        return moves
+        return moves  # return the list of moves
 
+    # minimax algorithm with alpha beta pruning
     def minimax(self, board, depth, maximizing, alpha, beta):
+        # base case
         if depth == 0:
-            return self.static_eval(board), None  # eval, move
+            return (
+                self.static_eval(board),
+                None,
+            )  # return the evaluation of the board and the move
 
-        # white
+        # if the turn is white , maximize
         if maximizing:
-            best_move = None
-            max_eval = -math.inf
-            moves = self.get_moves(board, "white")
-            for move in moves:
-                self.explored += 1
+            max_eval = -math.inf  # initialize the max evaluation
+            best_move = None  # initialize the best move
+            moves = self.get_moves(
+                board, "white"
+            )  # get all the moves of the white pieces
+            for move in moves:  # loop through the moves
+                self.explored += 1  # increment the number of explored boards
                 piece = board.squares[move.initial.row][move.initial.col].piece
                 temp_board = copy.deepcopy(board)
                 temp_board.move(piece, move)
                 piece.moved = False
                 eval = self.minimax(temp_board, depth - 1, False, alpha, beta)[
                     0
-                ]  # eval, mov
-                if eval > max_eval:
+                ]  # recursive call , eval, move
+                if (
+                    eval > max_eval
+                ):  # if the evaluation is greater than the max evaluation, update the max evaluation and the best move
                     max_eval = eval
-                    best_move = move or max_eval
+                    best_move = move
 
-                alpha = max(alpha, max_eval)
-                if beta <= alpha:
+                alpha = max(alpha, max_eval)  # update alpha
+                if (
+                    beta <= alpha
+                ):  # if beta is less than or equal to alpha , break and prune
+                    self.pruned_nodes += 1
                     break
 
-            if best_move is not None and not best_move:
+            if (
+                not best_move
+            ):  # if the best move is not none and not best move , choose a random move
                 best_move = moves[0]
 
-            return max_eval, best_move  # eval, move
+            return max_eval, best_move
 
-        # black
+        # if the turn is black , minimize
         elif not maximizing:
+            # initialize the min evaluation
+            min_eval = math.inf  # initialize the min evaluation
             best_move = None
-            min_eval = math.inf
-            moves = self.get_moves(board, "black")
-            for move in moves:
-                self.explored += 1
-                piece = board.squares[move.initial.row][move.initial.col].piece
-                temp_board = copy.deepcopy(board)
-                temp_board.move(piece, move)
-                piece.moved = False
+
+            moves = self.get_moves(
+                board, "black"
+            )  # get all the moves of the black pieces
+            for move in moves:  # loop through the moves
+                self.explored += 1  # increment the number of explored boards
+                piece = board.squares[move.initial.row][
+                    move.initial.col
+                ].piece  # get the piece
+                temp_board = copy.deepcopy(board)  # copy the board
+                temp_board.move(piece, move)  # move the piece
+                piece.moved = False  # set the moved attribute to false
                 eval = self.minimax(temp_board, depth - 1, True, alpha, beta)[
                     0
-                ]  # eval, move
-                if eval < min_eval:
+                ]  # recursive call , eval, move
+                if (
+                    eval < min_eval
+                ):  # if the evaluation is less than the min evaluation, update the min evaluation and the best move
                     min_eval = eval
-                    if (move is not None) and (min_eval is not None):
-                        best_move = move or min_eval
+                    best_move = move
 
-                beta = min(beta, min_eval)
-                if beta <= alpha:
+                beta = min(beta, min_eval)  # update beta
+                if (
+                    beta <= alpha
+                ):  # if beta is less than or equal to alpha , break and prune
+                    self.pruned_nodes += 1
                     break
 
-            if best_move is not None and not best_move:
-                idx = random.randrange(0, len(moves))
-                best_move = moves[idx]
+            if (
+                not best_move
+            ):  # if the best move is not none and not best move , choose a random move
+                best_move = moves[0]
 
             return min_eval, best_move  # eval, move
 
-    def minimax_without(self, board, depth, maximizing):
+    def minimax_without_pruning(self, board, depth, maximizing):
+        # base case
         if depth == 0:
-            return self.static_eval(board), None  # eval, move
+            return (
+                self.static_eval(board),
+                None,
+            )  # return the evaluation of the board and the move
 
-        # white
+        # if the turn is white , maximize
         if maximizing:
-            max_eval = -math.inf
-            moves = self.get_moves(board, "white")
-            for move in moves:
-                self.explored_without += 1
-                piece = board.squares[move.initial.row][move.initial.col].piece
-                temp_board = copy.deepcopy(board)
-                temp_board.move(piece, move)
-                piece.moved = False
-                eval = self.minimax_without(temp_board, depth - 1, False)[
+            max_eval = -math.inf  # initialize the max evaluation
+            moves = self.get_moves(
+                board, "white"
+            )  # get all the moves of the white pieces
+            for move in moves:  # loop through the moves
+                self.explored_without_pruning += (
+                    1  # increment the number of explored boards
+                )
+                piece = board.squares[move.initial.row][
+                    move.initial.col
+                ].piece  # get the piece
+                temp_board = copy.deepcopy(board)  # copy the board
+                temp_board.move(piece, move)  # move the piece
+                piece.moved = False  # set the moved attribute to false
+                eval = self.minimax_without_pruning(temp_board, depth - 1, False)[
                     0
-                ]  # eval, mov
-                if eval > max_eval:
+                ]  #  recursive call , eval, move
+                if (
+                    eval > max_eval
+                ):  # if the evaluation is greater than the max evaluation, update the max evaluation and the best move
                     max_eval = eval
                     best_move = move
 
-            if not best_move:
+            if (
+                not best_move
+            ):  # if the best move is not none and not best move , choose a random move
                 best_move = moves[0]
 
-            return max_eval, best_move  # eval, move
+            return max_eval, best_move
 
-        # black
+        # if the turn is black , minimize
         elif not maximizing:
+            # initialize the min evaluation
             min_eval = math.inf
-            moves = self.get_moves(board, "black")
-            for move in moves:
-                self.explored_without += 1
-                piece = board.squares[move.initial.row][move.initial.col].piece
-                temp_board = copy.deepcopy(board)
-                temp_board.move(piece, move)
-                piece.moved = False
-                eval = self.minimax_without(temp_board, depth - 1, True)[
+            moves = self.get_moves(
+                board, "black"
+            )  # get all the moves of the black pieces
+            for move in moves:  # loop through the moves
+                self.explored_without_pruning += (
+                    1  # increment the number of explored boards
+                )
+                piece = board.squares[move.initial.row][
+                    move.initial.col
+                ].piece  # get the piece
+                temp_board = copy.deepcopy(board)  # copy the board
+                temp_board.move(piece, move)  # move the piece
+                piece.moved = False  # set the moved attribute to false
+                eval = self.minimax_without_pruning(temp_board, depth - 1, True)[
                     0
-                ]  # eval, move
-                if eval < min_eval:
+                ]  # recursive call , eval, move
+                if (
+                    eval < min_eval
+                ):  # if the evaluation is less than the min evaluation, update the min evaluation and the best move
                     min_eval = eval
                     best_move = move
 
-            if not best_move:
-                idx = random.randrange(0, len(moves))
-                best_move = moves[idx]
+            if (
+                not best_move
+            ):  # if the best move is not none and not best move , choose a random move
+                best_move = moves[0]
 
-            return min_eval, best_move  # eval, move
+            return min_eval, best_move
 
-    # ---------
-    # MAIN EVAL
-    # ---------
-
+    # this function is used to test the performance of the alpha beta pruning
     def eval(self, main_board):
+        # inictialize the number of explored boards and the number of explored boards without pruning to 0
         self.explored = 0
-        self.explored_without = 0
+        self.explored_without_pruning = 0
 
-        # add last move
+        # get the last move to append it to the game moves
         last_move = main_board.last_move
         self.game_moves.append(last_move)
 
-        # book engine
+        # check if the engine is book to get the book move and append it to the game moves
+        # if there is no more book moves , change the engine to minimax
         if self.engine == "book":
             move = self.book_move()
 
@@ -297,33 +359,86 @@ class AI:
             if move is None:
                 self.engine = "minimax"
 
-        # minimax engine
+        # if the engine is minimax , get the best move using the minimax algorithm
         if self.engine == "minimax":
+            # print the number of explored boards
+            print("Finding the best move using Minimax algorithm ...")
             # printing
-            print("\nFinding best move...")
+            print("\n- Initial evalation for the static:", self.static_eval(main_board))
 
-            # minimax initial call
+            # minimax initial call without pruning
+            time_1 = time.time()
+            print(
+                "\n#############################################\nMinimax without pruning ..."
+            )
+            eval, move_without_pruning = self.minimax_without_pruning(
+                main_board, self.depth, False
+            )
+            time_2 = time.time()
+            print("- Final eval:", eval)
+            print(
+                "the best move is:",
+                "(",
+                move_without_pruning.initial.row,
+                ",",
+                move_without_pruning.initial.col,
+                ")",
+                "->",
+                "(",
+                move_without_pruning.final.row,
+                ",",
+                move_without_pruning.final.col,
+                ").",
+            )
+            print("- Boards explored", self.explored_without_pruning)
+            minimax_without_pruning_time = time_2 - time_1
+            print("time taken:", minimax_without_pruning_time, "seconds")
+            print("\n############################################# ")
+
+            # minimax initial call with pruning
+            print("Minimax with pruning Alpha Beta ...")
+            time_1 = time.time()
             eval, move = self.minimax(
                 main_board, self.depth, False, -math.inf, math.inf
-            )  # eval, move
-            # eval, move_without = self.minimax_without(main_board, self.depth, False)
-
-            # printing
-            print("\n- Initial eval:", self.static_eval(main_board))
+            )
+            time_2 = time.time()
             print("- Final eval:", eval)
-            print("the best move is:", move.__str__)
+            print(
+                "the best move is:",
+                "(",
+                move.initial.row,
+                ",",
+                move.initial.col,
+                ")",
+                "->",
+                "(",
+                move.final.row,
+                ",",
+                move.final.col,
+                ").",
+            )
             print("- Boards explored", self.explored)
-            print("- Boards explored without", self.explored_without)
+            print("- Pruned nodes", self.explored_without_pruning - self.explored)
+            minimax_with_pruning_time = time_2 - time_1
+            print("time taken:", minimax_with_pruning_time, "seconds")
+
+            print("\n############################################# ")
+
             if self.explored != 0:
                 print(
                     "optimization:",
-                    ((self.explored_without - self.explored) / self.explored) * 100,
+                    ((self.explored_without_pruning - self.explored) / self.explored)
+                    * 100,
                     "%",
                 )
                 print(
                     "Alpha Beta Pruning is almost ",
-                    self.explored_without / self.explored,
+                    self.explored_without_pruning / self.explored,
                     " times faster !",
+                )
+                print(
+                    "time saved:",
+                    minimax_without_pruning_time - minimax_with_pruning_time,
                 )
             if eval >= 5000:
                 print("* White MATE!")

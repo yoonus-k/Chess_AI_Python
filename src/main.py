@@ -1,4 +1,4 @@
-import sys, pygame
+import sys, pygame, os
 
 from const import *
 from game import *
@@ -21,9 +21,14 @@ class Main:
 
         while True:
             if not game.selected_piece:
-                game.show_bg(screen)
-                game.show_pieces(screen)
-                game.show_title(screen)
+
+                def show():
+                    game.show_bg(screen)
+                    game.show_pieces(screen)
+
+                    game.show_title(screen)
+
+                show()
 
             game.show_hover(screen)
 
@@ -111,6 +116,7 @@ class Main:
                                 pygame.display.update()
                                 # optimal move
                                 move = ai.eval(board)
+
                                 initial = move.initial
                                 final = move.final
                                 # piece
@@ -185,4 +191,5 @@ class Main:
 
 if __name__ == "__main__":
     m = Main()
+
     m.mainloop()
