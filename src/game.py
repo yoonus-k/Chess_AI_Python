@@ -31,6 +31,9 @@ class Game:
         # increment the size of the text
         text = pygame.transform.scale(text, (600, 200))
 
+        # Make the text transparent
+        text.set_alpha(191)
+
         # draw
         surface.blit(text, text_rect)
 
@@ -70,6 +73,7 @@ class Game:
         if self.selected_piece:
             self.show_moves(surface)
 
+    # draw the pieces on the board
     def show_pieces(self, surface):
         for row in range(ROWS):
             for col in range(COLS):
@@ -181,7 +185,7 @@ class Game:
 
 ###########################################################################
 ###########################################################################
-# dragger class
+# Dragger class
 class Dragger:
     """
     Responsable of dragging the pieces through screen

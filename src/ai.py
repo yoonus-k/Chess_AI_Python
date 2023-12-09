@@ -221,7 +221,7 @@ class AI:
                     break
 
             if (
-                not best_move
+                best_move is not None and not best_move
             ):  # if the best move is not none and not best move , choose a random move
                 best_move = moves[0]
 
@@ -261,7 +261,7 @@ class AI:
                     break
 
             if (
-                not best_move
+                best_move is not None and not best_move
             ):  # if the best move is not none and not best move , choose a random move
                 best_move = moves[0]
 
@@ -278,6 +278,7 @@ class AI:
         # if the turn is white , maximize
         if maximizing:
             max_eval = -math.inf  # initialize the max evaluation
+            best_move = None  # initialize the best move
             moves = self.get_moves(
                 board, "white"
             )  # get all the moves of the white pieces
@@ -301,7 +302,7 @@ class AI:
                     best_move = move
 
             if (
-                not best_move
+                best_move is not None and not best_move
             ):  # if the best move is not none and not best move , choose a random move
                 best_move = moves[0]
 
@@ -311,6 +312,7 @@ class AI:
         elif not maximizing:
             # initialize the min evaluation
             min_eval = math.inf
+            best_move = None  # initialize the best move
             moves = self.get_moves(
                 board, "black"
             )  # get all the moves of the black pieces
@@ -334,7 +336,7 @@ class AI:
                     best_move = move
 
             if (
-                not best_move
+                best_move is not None and not best_move
             ):  # if the best move is not none and not best move , choose a random move
                 best_move = moves[0]
 
@@ -342,7 +344,7 @@ class AI:
 
     # this function is used to test the performance of the alpha beta pruning
     def eval(self, main_board):
-        # inictialize the number of explored boards and the number of explored boards without pruning to 0
+        # initialize the number of explored boards and the number of explored boards without pruning to 0
         self.explored = 0
         self.explored_without_pruning = 0
 
@@ -374,6 +376,13 @@ class AI:
             eval, move_without_pruning = self.minimax_without_pruning(
                 main_board, self.depth, False
             )
+            if move_without_pruning is None:
+                print("checkmate!")
+                # exit after 3 seconds
+                pygame.time.delay(3000)
+                pygame.quit()
+                exit(0)
+
             time_2 = time.time()
             print("- Final eval:", eval)
             print(
@@ -437,11 +446,22 @@ class AI:
                     minimax_without_pruning_time - minimax_with_pruning_time,
                     " seconds",
                 )
-                print("\n############################################# ")
+                print("\n#############################################")
+                print("\n#############################################")
             if eval >= 5000:
                 print("* White MATE!")
+                # exit after 3 seconds
+                pygame.time.delay(3000)
+
+                pygame.quit()
+                exit(0)
             if eval <= -5000:
                 print("* Black MATE!")
+                # exit after 3 seconds
+                pygame.time.delay(3000)
+
+                pygame.quit()
+                exit(0)
 
         # append
         self.game_moves.append(move)
