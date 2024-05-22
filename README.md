@@ -1,6 +1,7 @@
 # Chess AI
 
 A Python-based Chess AI with customizable game modes, AI depth, and themes.
+![UML Diagram](docs/UML.jpeg)
 
 ## Instructions
 
